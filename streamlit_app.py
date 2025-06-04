@@ -281,6 +281,68 @@ with tab2:
     else:
         st.warning("No lyrics available with current filters")
 
+    # Word search section
+st.subheader("Word Usage Analysis")
+search_word = st.text_input("Enter a word to analyze:")
+
+if search_word:
+    # Add word count columns
+    df['word_count'] = df['lyrics'].apply(lambda x: count_word_occurrences(x, search_word))
+    df['contains_word'] = df['word_count'] > 0
+    
+    # Filter songs containing the word
+    word_songs = df[df['contains_word']].copy()
+    
+    # Time trend visualization
+    yearly = df.groupby('year').agg(
+        total_songs=('track_name', 'count'),
+        songs_with_word=('contains_word', 'sum'),
+        total_occurrences=('word_count', 'sum')
+    ).reset_index()
+    
+    yearly['frequency_percent'] = yearly['songs_with_word'] / yearly['total_songs'] * 100
+    
+    fig = px.line(yearly, x='year', y='frequency_percent',
+                  title=f'Usage of "{search_word}" Over Time',
+                  labels={'frequency_percent': '% of Songs Containing Word'})
+    st.plotly_chart(fig)
+    
+    # Display songs table with filtering
+    st.subheader(f"Songs Containing '{search_word}'")
+    
+    # Filter options
+    col1, col2 = st.columns(2)
+    with col1:
+        year_range = st.slider("Year Range", 
+                              min_value=int(df['year'].min()),
+                              max_value=int(df['year'].max()),
+                              value=(1950, 2020))
+    with col2:
+        min_occurrences = st.slider("Minimum Occurrences", 1, 10, 1)
+    
+    # Apply filters
+    filtered_songs = word_songs[
+        (word_songs['year'] >= year_range[0]) &
+        (word_songs['year'] <= year_range[1]) &
+        (word_songs['word_count'] >= min_occurrences)
+    ]
+    
+    # Show results
+    st.dataframe(filtered_songs[['track_name', 'artist_name', 'year', 'word_count']])
+    
+    # Show lyrics snippets
+    st.subheader("Lyrics Snippets")
+    for _, row in filtered_songs.iterrows():
+        lyrics = row['lyrics']
+        matches = re.finditer(rf'\b{re.escape(search_word)}\b', lyrics, re.IGNORECASE)
+        positions = [match.start() for match in matches]
+        
+        for pos in positions:
+            start = max(0, pos - 30)
+            end = min(len(lyrics), pos + len(search_word) + 30)
+            snippet = lyrics[start:end].replace('\n', ' ')
+            st.write(f"**{row['track_name']}** ({row['year']}): ...{snippet}...")
+
 with tab3:
     # Profanity trends
     st.subheader("Explicit Content Trends")
