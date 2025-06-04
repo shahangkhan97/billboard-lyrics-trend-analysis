@@ -52,7 +52,7 @@ years = st.sidebar.slider(
     "Select Year Range",
     min_value=1959,
     max_value=2024,
-    value=(1959, 2024)
+    value=(1959, 2024))
 st.sidebar.caption(f"Selected: {years[0]} - {years[1]}")
 
 # Genre filter - with "All" option
