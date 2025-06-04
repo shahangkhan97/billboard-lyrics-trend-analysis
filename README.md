@@ -19,6 +19,21 @@ The final dataset contains **6,500 songs** across 65 years of popular music.
 ## 🔑 Key Features
 
 ### 📊 Data Collection
+
+#### 📜 Data Collection Workflow
+```mermaid
+graph TD
+    A[Scrape Wikipedia] --> B[Get Billboard Data]
+    B --> C[Check Lyrics Cache]
+    C --> D{Has Lyrics?}
+    D -->|Yes| E[Use Cached Lyrics]
+    D -->|No| F[Fetch via API]
+    F --> G[Retry with Title/Artist Variations]
+    G --> H[Save to Cache]
+    H --> I[Save CSV]
+    I --> J[Zip Yearly Files]
+```
+
 - Scraped Billboard Year-End Hot 100 lists (1959-2024) from Wikipedia
 - Implemented intelligent async lyrics fetching from lyrics.ovh API
 - Built caching system to avoid redundant API calls
@@ -80,18 +95,3 @@ The cleaned dataset is ready for:
 3. **Word Frequency**: Compare vocabulary across genres/eras
 4. **Profanity Trends**: Analyze explicitness over time
 5. **Genre Evolution**: Visualize genre popularity shifts
-
-## ⚙️ Technical Setup
-
-### Dependencies
-
-graph TD
-    A[Scrape Wikipedia] --> B[Get Billboard Data]
-    B --> C[Check Lyrics Cache]
-    C --> D{Has Lyrics?}
-    D -->|Yes| E[Use Cached]
-    D -->|No| F[Fetch via API]
-    F --> G[Retry with Variations]
-    G --> H[Save to Cache]
-    H --> I[Save CSV]
-    I --> J[Zip Yearly Files]
