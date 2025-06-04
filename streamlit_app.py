@@ -5,7 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from wordcloud import WordCloud, STOPWORDS
-from textblob import TextBlob
 import plotly.express as px
 import plotly.graph_objects as go
 from collections import Counter
@@ -24,14 +23,11 @@ st.set_page_config(
 def load_data():
     df = pd.read_csv('billboard_hot100_cleaned.csv')
     
+    # Fill missing profanity_count values
+    df['profanity_count'] = df['profanity_count'].fillna(0)
+    
     # Add decades column
     df['decade'] = (df['Year'] // 10) * 10
-    
-    # Calculate sentiment if not already in dataset
-    if 'sentiment' not in df.columns:
-        df['sentiment'] = df['Lyrics_Cleaned'].apply(
-            lambda x: TextBlob(str(x)).sentiment.polarity if pd.notnull(x) else 0
-        )
     
     return df
 
@@ -243,39 +239,47 @@ with tab2:
     else:
         st.warning(f"No songs found for {genre} with current filters")
     
-    # Sentiment analysis
-    st.subheader("Sentiment Analysis")
+    # Word frequency analysis
+    st.subheader("Top Words by Genre")
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("**Sentiment Over Time**")
-        sentiment_trend = filtered_df.groupby('Year')['sentiment'].mean().reset_index()
-        fig = px.line(
-            sentiment_trend, 
-            x='Year', 
-            y='sentiment',
-            title="Average Lyric Sentiment by Year",
-            height=400
-        )
-        fig.update_traces(line=dict(color='purple', width=3))
-        fig.update_layout(yaxis_title="Sentiment Polarity (-1 to 1)")
-        st.plotly_chart(fig, use_container_width=True)
+        top_n = st.slider("Number of Top Words to Show", 10, 50, 20)
     
     with col2:
-        st.markdown("**Sentiment by Genre**")
-        sentiment_genre = filtered_df.groupby('consolidated_genre')['sentiment'].mean().reset_index()
-        sentiment_genre = sentiment_genre.sort_values('sentiment', ascending=False)
+        show_all = st.checkbox("Show All Genres", True)
+    
+    if show_all:
+        genre_df = filtered_df
+        title = "Top Words Across All Genres"
+    else:
+        genre_df = filtered_df[filtered_df['consolidated_genre'] == genre]
+        title = f"Top Words in {genre} Lyrics"
+    
+    if not genre_df.empty:
+        all_words = []
+        for text in genre_df['Lyrics_Cleaned'].dropna():
+            words = text.split()
+            words = [word for word in words if word not in extra_stopwords]
+            all_words.extend(words)
+        
+        word_counts = Counter(all_words)
+        top_words = word_counts.most_common(top_n)
+        
+        words_df = pd.DataFrame(top_words, columns=['Word', 'Count'])
+        
         fig = px.bar(
-            sentiment_genre, 
-            x='consolidated_genre', 
-            y='sentiment',
-            color='sentiment',
-            color_continuous_scale='RdYlGn',
-            title="Average Sentiment by Genre",
-            height=400
+            words_df,
+            x='Count',
+            y='Word',
+            orientation='h',
+            title=title,
+            height=500
         )
-        fig.update_layout(xaxis_title="Genre", yaxis_title="Sentiment Polarity")
+        fig.update_layout(yaxis={'categoryorder':'total ascending'})
         st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning("No lyrics available with current filters")
 
 with tab3:
     # Profanity trends
@@ -340,6 +344,10 @@ with tab4:
     artist_df = filtered_df[filtered_df['Artist'] == artist]
     
     if not artist_df.empty:
+        # Fill missing profanity counts
+        artist_df = artist_df.copy()
+        artist_df['profanity_count'] = artist_df['profanity_count'].fillna(0)
+        
         fig = px.scatter(
             artist_df, 
             x='Year', 
@@ -381,7 +389,7 @@ with tab5:
         
         # Display song list
         st.dataframe(
-            search_df[['Year', 'Title', 'Artist', 'consolidated_genre', 'profanity_count', 'sentiment']].sort_values('Year', ascending=False),
+            search_df[['Year', 'Title', 'Artist', 'consolidated_genre', 'profanity_count']].sort_values('Year', ascending=False),
             height=400,
             hide_index=True
         )
@@ -398,24 +406,6 @@ with tab5:
         col1.metric("Genre", song['consolidated_genre'])
         col2.metric("Chart Position", f"#{song['Rank']}")
         col3.metric("Profanity Count", song['profanity_count'])
-        
-        # Sentiment gauge
-        fig = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=song['sentiment'],
-            domain={'x': [0, 1], 'y': [0, 1]},
-            title={'text': "Sentiment"},
-            gauge={
-                'axis': {'range': [-1, 1]},
-                'bar': {'color': "purple"},
-                'steps': [
-                    {'range': [-1, -0.5], 'color': "red"},
-                    {'range': [-0.5, 0.5], 'color': "lightgray"},
-                    {'range': [0.5, 1], 'color': "green"}
-                ]
-        }))
-        fig.update_layout(height=250)
-        st.plotly_chart(fig, use_container_width=True)
         
         # Lyrics display
         with st.expander("View Lyrics"):
