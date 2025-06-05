@@ -1184,6 +1184,86 @@ The final dataset (billboard_hot100_cleaned.csv) contains:
 | profanity_count | Profanity frequency | 4 |
 | contains_profanity | Profanity flag | True |
 
-## 📈 Next Steps for Analysis
+## 📊 Data Analysis & Insights
 
-The analysis is done 
+This section explores key trends and patterns in Billboard Hot 100 lyrics from 1959-2024, covering genre evolution, lyrical themes, profanity trends, artist analysis, and song exploration.
+
+You can view the dashboard [here](https://billboard-lyrics-trend-analysis.streamlit.app/)
+
+### Genre Trends
+
+#### Genre Evolution Over Time
+- **Dominant Genres by Decade**:
+  - 1950s: Rock dominated with 46 songs in the Hot 100
+  - 1960s: ... still Rock with 281 songs in the Hot 100
+  - 1970s: ... still Rock with 376 songs in the Hot 100
+  - 1980s: Rock peaked with 433 songs in the Hot 100
+  - 1990s: R&B/Soul Dominated with 348 songs in the Hot 100
+  - 2000s: R&B/Soul Dominated with 267 songs in the Hot 100
+  - 2010s-2020s: Pop solidified as the most prevalent genre, surpassing Rock at it's peak with 475 songs in the Hot 100 in the 2010s
+
+#### Top Growing & Declining Genres
+- **Fastest Growing Genre**: Hip-Hop/Rap
+  - Growth rate: Debuting on the Hot 100 with 1 song in the 70s/80s to 41 songs in 2018
+  - Transitioned from niche to mainstream dominance
+- **Biggest Fall Off**: Rock
+  - Decline rate: Started off strong with 46 songs in the Hot 100 in 1959 to just 5 songs in 2024
+  - Gradually replaced by contemporary pop subgenres
+
+
+#### Word Usage Trends
+
+##### Love is by far the most dominant word in song lyrics, with 1988 being the most dominant year where it showed up in 76.92% of songs!!
+
+- **Increasing Terms**:
+  - "flex" (emerged in 1990s, peaked in 2010s)
+  - "lit" (exploded in mid 2010a)
+- **Decreasing Terms**:
+  - "darling" (Peaked in 1960s, showing up in over 11% of all BillBoard Hot 100 songs, continued to decline ever since showing up in less than 3% songs overall in the 2020s)
+
+### Profanity Insights
+
+#### Explicit Content Trends
+- **Overall Growth**:
+  - 1960s: <3% of songs contained profanity
+  - 2020s: >50% of songs contain profanity
+  - Steady increase since 1990s
+
+#### Profanity by Genre
+1. **Hip-Hop/Rap**: ~78% of songs contain profanity
+2. **Reggae**: ~29%
+3. **R&B/Soul**: ~19%
+4. **Pop**: ~17%
+5. **Country/Folk**: ~14%
+
+#### Most Explicit Songs
+1. "Get Low" by Lil Jon & The East Side Boyz Feat. Ying Yang Twins (2003/2004) - 86 instances
+2. "Rake It Up" by TYo Gotti Feat. Nicki Minaj (2017) - 72 instances
+3. "Type Shit" by Future, Metro Boomin, Travis Scott, and Playboi Carti (2024) - 72 instances
+
+### Artist Spotlight
+
+#### Most Frequent Artists
+1. Madonna (35 hits)
+2. Taylor Swift (32 hits)
+3. Mariah Carey (29 hits)
+4. Elton John (26 hits)
+5. Janet Jackson (24 hits) (Note: More hits than Michael Jackson at No.7 with 22!)
+
+#### Artist Longevity
+- **Longest Careers**:
+  1. Brenda Lee (64 years) first showing up in 1960 and last appearance in 2024
+  2. Burl Ives (62 years) first showing up in 1962 and last appearance in 2024
+  3. Wham (39 years) first showing up in 1985 and last appearance in 2024
+- **Highest Average Rank**:
+  1. Bruno Mars (avg. position: 15.9 with 10 songs)
+  2. 50 Cent (avg. position 22.6 with 5 songs)
+  3. Flo Rida (avg. position 23.4 with 5 songs)
+
+## Key Takeaways
+
+1. **Genre Shift**: Clear transition from Rock-dominated charts to Pop and Hip-Hop/Rap dominance
+2. **Lyrical Content**: Increased informality and explicitness over time
+3. **Cultural Reflection**: Lyrics mirror societal changes (individualism, materialism)
+4. **Artist Longevity**: Few artists maintain relevance across decades
+5. **Globalization**: Recent decades show more international influences
