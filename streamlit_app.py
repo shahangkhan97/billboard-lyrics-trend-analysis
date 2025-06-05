@@ -33,6 +33,12 @@ def load_data():
 
 df = load_data()
 
+# Helper function for word count
+def count_word_occurrences(text, word):
+    if pd.isnull(text):
+        return 0
+    return len(re.findall(rf'\b{re.escape(word.lower())}\b', text.lower()))
+
 # Custom stopwords for word clouds
 extra_stopwords = set(['oh', 'yeah', 'hey', 'la', 'da', 'uh', 'na', 'ha', 'ooh', 'woo', 'hoo', 'chorus', 'verse']) | set(STOPWORDS)
 
@@ -327,21 +333,19 @@ if search_word:
         (word_songs['word_count'] >= min_occurrences)
     ]
     
-    # Show results
-    st.dataframe(filtered_songs[['track_name', 'artist_name', 'year', 'word_count']])
-    
-    # Show lyrics snippets
-    st.subheader("Lyrics Snippets")
-    for _, row in filtered_songs.iterrows():
-        lyrics = row['lyrics']
-        matches = re.finditer(rf'\b{re.escape(search_word)}\b', lyrics, re.IGNORECASE)
-        positions = [match.start() for match in matches]
-        
-        for pos in positions:
-            start = max(0, pos - 30)
-            end = min(len(lyrics), pos + len(search_word) + 30)
-            snippet = lyrics[start:end].replace('\n', ' ')
-            st.write(f"**{row['track_name']}** ({row['year']}): ...{snippet}...")
+   # Show results
+    st.write(f"{len(filtered_songs)} songs found containing '{search_word}' between {year_range[0]} and {year_range[1]} with at least {min_occurrences} occurrences.")
+
+    if not filtered_songs.empty:
+        st.dataframe(
+            filtered_songs[['Year', 'Artist', 'track_name', 'word_count']],
+            column_config={
+                "word_count": st.column_config.NumberColumn("Occurrences")
+            },
+            use_container_width=True
+        )
+    else:
+        st.warning(f"No songs found containing '{search_word}'.")
 
 with tab3:
     # Profanity trends
