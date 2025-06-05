@@ -1,8 +1,8 @@
-# Billboard Hot 100 Lyrics Analysis (1959-2024)
+# Billboard Hot 100 Analysis (1959-2024)
 
 ![Billboard Logo](https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Billboard_Hot_100_logo.jpg/320px-Billboard_Hot_100_logo.jpg)
 
-This project analyzes lyrical trends in [Billboard Hot 100](https://en.wikipedia.org/wiki/Billboard_Hot_100) songs from 1959 to 2024 through a comprehensive data pipeline covering collection, preprocessing, enrichment, and analysis.
+This project analyzes trends in [Billboard Hot 100](https://en.wikipedia.org/wiki/Billboard_Hot_100) charts from 1959 to 2024 through a comprehensive data pipeline covering collection, preprocessing, enrichment, and analysis.
 
 ## 🎯 Project Overview
 
@@ -1186,8 +1186,4 @@ The final dataset (billboard_hot100_cleaned.csv) contains:
 
 ## 📈 Next Steps for Analysis
 
-The cleaned dataset is ready for:
-- **Topic Modeling**: Identify recurring themes in lyrics
-- **Word Frequency**: Compare vocabulary across genres/eras
-- **Profanity Trends**: Analyze explicitness over time
-- **Genre Evolution**: Visualize genre popularity shifts
+The analysis is done 
