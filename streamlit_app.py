@@ -39,6 +39,65 @@ def count_word_occurrences(text, word):
         return 0
     return len(re.findall(rf'\b{re.escape(word.lower())}\b', text.lower()))
 
+def plot_genre_growth_trends(df):
+    # Step 1: Preprocess
+    df['Year'] = df['Year'].astype(int)
+    df['decade'] = (df['Year'] // 10) * 10
+
+    # Step 2: Count songs per genre per year
+    genre_yearly_counts = df.groupby(['Year', 'consolidated_genre']).size().reset_index(name='song_count')
+
+    # Step 3: Normalize song counts per year
+    total_per_year = genre_yearly_counts.groupby('Year')['song_count'].sum().reset_index(name='total_songs')
+    genre_yearly_counts = genre_yearly_counts.merge(total_per_year, on='year')
+    genre_yearly_counts['normalized_count'] = genre_yearly_counts['song_count'] / genre_yearly_counts['total_songs']
+
+    # Step 4: Compute average normalized count per decade
+    genre_yearly_counts['decade'] = (genre_yearly_counts['Year'] // 10) * 10
+    genre_decade_avg = genre_yearly_counts.groupby(['decade', 'consolidated_genre'])['normalized_count'].mean().reset_index()
+
+    # Step 5: Compare first vs last decade
+    first_decade = genre_decade_avg['decade'].min()
+    last_decade = genre_decade_avg['decade'].max()
+
+    first_avg = genre_decade_avg[genre_decade_avg['decade'] == first_decade]
+    last_avg = genre_decade_avg[genre_decade_avg['decade'] == last_decade]
+
+    genre_change = pd.merge(first_avg, last_avg, on='consolidated_genre', suffixes=('_first', '_last'))
+    genre_change['growth'] = genre_change['normalized_count_last'] - genre_change['normalized_count_first']
+
+    # Step 6: Get top growing and declining genres
+    top_growing_genre = genre_change.sort_values(by='growth', ascending=False).iloc[0]
+    top_declining_genre = genre_change.sort_values(by='growth').iloc[0]
+
+    # Step 7: Filter time series data
+    top_genres = [top_growing_genre['consolidated_genre'], top_declining_genre['consolidated_genre']]
+    ts_data = genre_yearly_counts[genre_yearly_counts['consolidated_genre'].isin(top_genres)]
+
+    # Step 8: Plot
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.lineplot(data=ts_data, x='Year', y='normalized_count', hue='consolidated_genre', ci='sd', marker='o', ax=ax)
+
+    # Annotations
+    for genre, label in zip([top_growing_genre, top_declining_genre], ['Growing', 'Declining']):
+        ax.annotate(f"{label} Start Avg: {genre['normalized_count_first']:.3f}",
+                    xy=(first_decade + 5, genre['normalized_count_first']),
+                    xytext=(first_decade + 2, genre['normalized_count_first'] + 0.01),
+                    arrowprops=dict(arrowstyle='->'), fontsize=9)
+
+        ax.annotate(f"{label} End Avg: {genre['normalized_count_last']:.3f}",
+                    xy=(last_decade + 5, genre['normalized_count_last']),
+                    xytext=(last_decade - 15, genre['normalized_count_last'] + 0.01),
+                    arrowprops=dict(arrowstyle='->'), fontsize=9)
+
+    ax.set_title("Top Growing and Declining Genres Over Time (Normalized)")
+    ax.set_xlabel("Year")
+    ax.set_ylabel("Normalized Share of Songs")
+    ax.legend(title="Genre")
+    ax.grid(True)
+
+    return fig
+
 # Custom stopwords for word clouds
 extra_stopwords = set(['oh', 'yeah', 'hey', 'la', 'da', 'uh', 'na', 'ha', 'ooh', 'woo', 'hoo', 'chorus', 'verse']) | set(STOPWORDS)
 
@@ -159,9 +218,9 @@ with tab1:
     st.plotly_chart(fig, use_container_width=True)
     
     # Genre growth/decline analysis
-    st.subheader("Genre Growth & Decline (1959 vs 2024)")
+    st.subheader("📈 Genre Growth & Decline (1959–2024)")
     
-    # Calculate change from first to last period
+    # --- Calculate genre growth from first to last decade ---
     start_period = df[df['Year'].between(1959, 1969)]
     end_period = df[df['Year'].between(2015, 2024)]
     
@@ -173,13 +232,13 @@ with tab1:
     
     genre_change = pd.merge(start_counts, end_counts, on='Genre', how='outer').fillna(0)
     genre_change['Change'] = genre_change['End_Count'] - genre_change['Start_Count']
-    genre_change['Pct_Change'] = (genre_change['Change'] / genre_change['Start_Count']) * 100
+    genre_change['Pct_Change'] = (genre_change['Change'] / genre_change['Start_Count'].replace(0, 1)) * 100
     genre_change = genre_change.sort_values('Pct_Change', ascending=False)
     
-    # Top growing genres
-    st.markdown("**Top Growing Genres**")
+    # --- Top growing genres ---
+    st.markdown("### 🟢 Top Growing Genres")
     top_growing = genre_change.nlargest(5, 'Pct_Change')
-    fig = px.bar(
+    fig_grow = px.bar(
         top_growing,
         x='Genre',
         y='Pct_Change',
@@ -188,14 +247,14 @@ with tab1:
         text='Pct_Change',
         height=400
     )
-    fig.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
-    fig.update_layout(yaxis_title="Percentage Change")
-    st.plotly_chart(fig, use_container_width=True)
+    fig_grow.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
+    fig_grow.update_layout(yaxis_title="Percentage Change")
+    st.plotly_chart(fig_grow, use_container_width=True)
     
-    # Top declining genres
-    st.markdown("**Top Declining Genres**")
+    # --- Top declining genres ---
+    st.markdown("### 🔴 Top Declining Genres")
     top_declining = genre_change.nsmallest(5, 'Pct_Change')
-    fig = px.bar(
+    fig_decline = px.bar(
         top_declining,
         x='Genre',
         y='Pct_Change',
@@ -204,9 +263,47 @@ with tab1:
         text='Pct_Change',
         height=400
     )
-    fig.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
-    fig.update_layout(yaxis_title="Percentage Change")
-    st.plotly_chart(fig, use_container_width=True)
+    fig_decline.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
+    fig_decline.update_layout(yaxis_title="Percentage Change")
+    st.plotly_chart(fig_decline, use_container_width=True)
+    
+    # ---  Time series for top growing & declining genres ---
+    st.markdown("### 📊 Time Series Trend of Top Growing & Declining Genres")
+    
+    # Identify the single top growing and declining genres
+    top_growing_genre = top_growing.iloc[0]['Genre']
+    top_declining_genre = top_declining.iloc[0]['Genre']
+    trend_df = df[df['consolidated_genre'].isin([top_growing_genre, top_declining_genre])]
+    
+    # Count and normalize per year
+    year_genre_counts = trend_df.groupby(['Year', 'consolidated_genre']).size().reset_index(name='count')
+    year_totals = df.groupby('Year').size().reset_index(name='total')
+    year_genre_counts = year_genre_counts.merge(year_totals, on='Year')
+    year_genre_counts['normalized'] = year_genre_counts['count'] / year_genre_counts['total']
+    
+    # Plot using seaborn/matplotlib
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    
+    fig, ax = plt.subplots(figsize=(12, 5))
+    sns.lineplot(data=year_genre_counts, x='Year', y='normalized', hue='consolidated_genre', marker='o', ax=ax)
+    
+    # Annotations (optional)
+    for genre in [top_growing_genre, top_declining_genre]:
+        start_avg = year_genre_counts[(year_genre_counts['Year'] <= 1969) & 
+                                       (year_genre_counts['consolidated_genre'] == genre)]['normalized'].mean()
+        end_avg = year_genre_counts[(year_genre_counts['Year'] >= 2015) & 
+                                     (year_genre_counts['consolidated_genre'] == genre)]['normalized'].mean()
+        ax.annotate(f"{genre} Start Avg: {start_avg:.3f}", xy=(1964, start_avg),
+                    xytext=(1960, start_avg + 0.01), arrowprops=dict(arrowstyle='->'))
+        ax.annotate(f"{genre} End Avg: {end_avg:.3f}", xy=(2020, end_avg),
+                    xytext=(2005, end_avg + 0.01), arrowprops=dict(arrowstyle='->'))
+    
+    ax.set_title("Normalized Share Over Time")
+    ax.set_ylabel("Normalized Share of Songs")
+    ax.grid(True)
+    st.pyplot(fig)
+
 
 with tab2:
     # Word clouds
@@ -300,7 +397,7 @@ if search_word:
     word_songs = df[df['contains_word']].copy()
     
     # Time trend visualization
-    yearly = df.groupby('year').agg(
+    yearly = df.groupby('Year').agg(
         total_songs=('track_name', 'count'),
         songs_with_word=('contains_word', 'sum'),
         total_occurrences=('word_count', 'sum')
