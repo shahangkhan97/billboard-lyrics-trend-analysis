@@ -287,7 +287,7 @@ search_word = st.text_input("Enter a word to analyze:")
 
 if search_word:
     # Add word count columns
-    df['word_count'] = df['lyrics'].apply(lambda x: count_word_occurrences(x, search_word))
+    df['word_count'] = df['Lyrics_Cleaned'].apply(lambda x: count_word_occurrences(x, search_word))
     df['contains_word'] = df['word_count'] > 0
     
     # Filter songs containing the word
